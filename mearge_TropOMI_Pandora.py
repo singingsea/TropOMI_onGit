@@ -7,18 +7,27 @@ Created on Tue Jun 19 16:23:02 2018
 
 import pandas as pd
 
-Pandora_no = '145'
+Pandora_no = '122'
 #site = 'Downsview'
 #site = 'Egbert'
-site = 'StGeorge'
+#site = 'StGeorge'
+site = 'FortMcKay'
 TropOMI_type = 'OFFL'
 average_dis = '24' # TropOMI averaged distance in km
+ERA_merged = True # if the TropOMI data has already get ERA wind data merged
+
 
 #Pandora_shelve_filename = '\\\\wdow05dtmibroh.ncr.int.ec.gc.ca\\GDrive\\Pandora\\103\\Blick\\L2\\Blick_L2.out'
 #Pandora_shelve_filename = '\\\\wdow05dtmibroh.ncr.int.ec.gc.ca\\GDrive\\Pandora\\122\\Blick\\L2\\Blick_L2.out'
 Pandora_shelve_filename = '\\\\wdow05dtmibroh.ncr.int.ec.gc.ca\\GDrive\\Pandora\\' + Pandora_no + '\\Blick\\L2\\Blick_L2.out'
 #Pandora_shelve_filename = '\\\\wdow05dtmibroh.ncr.int.ec.gc.ca\\GDrive\\Pandora\\109\\Blick\\L2\\Blick_L2.out'
-TropOMI_shelve_filepath = 'C:\\Projects\\TropOMI\\data\\NO2_output\\' + TropOMI_type + '\\' + site+ '\\'
+if ERA_merged == True:
+    TropOMI_shelve_filepath = 'C:\\Projects\\TropOMI\\data\\NO2_output\\' + TropOMI_type + '\\' + site+ '_ERA\\'
+    CSV_output_filepath = 'C:\\Projects\\TropOMI\\data\\NO2_merged_with_Pandora_ERA\\'
+else:
+    TropOMI_shelve_filepath = 'C:\\Projects\\TropOMI\\data\\NO2_output\\' + TropOMI_type + '\\' + site+ '\\'
+    CSV_output_filepath = 'C:\\Projects\\TropOMI\\data\\NO2_merged_with_Pandora\\'
+    
 #TropOMI_shelve_filepath = 'C:\\Projects\\TropOMI\\data\\NO2_output\\NRTI\\Downsview\\'
 #TropOMI_shelve_filepath = 'C:\\Projects\\TropOMI\\data\\NO2_output\\OFFL\\FortMcKay\\'
 #TropOMI_shelve_filepath = 'C:\\Projects\\TropOMI\\data\\NO2_output\\NRTI\\FortMcKay\\'
@@ -31,7 +40,7 @@ TropOMI_shelve_filename = 'TropOMI_' + TropOMI_type + '_' + site + '_avg' + aver
 #TropOMI_shelve_filename = 'TropOMI_OFFL_FortMcKay_avg7km.out'
 #TropOMI_shelve_filename = 'TropOMI_NRTI_FortMcKay_avg7km.out'
 #TropOMI_shelve_filename = 'TropOMI_NRTI_StGeorge_avg7km.out'
-CSV_output_filepath = 'C:\\Projects\\TropOMI\\data\\NO2_merged_with_Pandora\\'
+
 
 def open_shelf(shelve_filename):
     import shelve
@@ -108,6 +117,8 @@ x_simple['TropOMI_NO2'] = x.no2.copy()
 x_simple['Pandora_datetime'] = x['Column 1: UT date and time for center of measurement, yyyymmddThhmmssZ (ISO 8601)'].copy()
 x_simple['Pandora_NO2'] = x['Column 8: Nitrogen dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'].copy()
 x_simple['d'] = x.d.copy()
+
+    
 x_simple.to_csv(CSV_output_filepath+CSV_output_filename[0:-4] + '_simple.csv',index=False)# output for plotting tools (used in matlab)
 
 
@@ -127,6 +138,15 @@ x_simple['TropOMI_NO2'] = x.no2.copy()
 x_simple['Pandora_datetime'] = x['Column 1: UT date and time for center of measurement, yyyymmddThhmmssZ (ISO 8601)'].copy()
 x_simple['Pandora_NO2'] = x['Column 8: Nitrogen dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'].copy()
 x_simple['d'] = x.d.copy()
+if ERA_merged == True:
+    x_simple['u_1000hPa'] = x.u_1000hPa.copy()
+    x_simple['v_1000hPa'] = x.v_1000hPa.copy()
+    x_simple['u_900hPa'] = x.u_900hPa.copy()
+    x_simple['v_900hPa'] = x.v_900hPa.copy()
+    x_simple['u_800hPa'] = x.u_800hPa.copy()
+    x_simple['v_800hPa'] = x.v_800hPa.copy()
+    x_simple['u_700hPa'] = x.u_700hPa.copy()
+    x_simple['v_700hPa'] = x.v_700hPa.copy()
 x_simple.to_csv(CSV_output_filepath+CSV_output_filename[0:-4] + '_simple.csv',index=False)# output for plotting tools (used in matlab)
 
 

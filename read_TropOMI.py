@@ -8,10 +8,11 @@ import netCDF4
 import numpy as np
 import pandas as pd
 
-filename = 'C:\\Projects\\TropOMI\\data\\NO2\\trop_overpass__NO2_____s20180308_e20180410_c20180430203837_Toronto.nc'
+filename = 'C:\\Projects\\TropOMI\\data\\NO2\\tropomi_OilSands_NO2_OFFL_20180312.nc'
+#filename = 'C:\\Projects\\TropOMI\\data\\NO2\\trop_overpass__NO2_____s20180308_e20180410_c20180430203837_Toronto.nc'
 #filename = 'C:\\Projects\\TropOMI\\data\\NO2\\trop_overpass__NO2_____s20180308_e20180410_c20180430203856_Egbert.nc'
 #filename = 'C:\\Projects\\TropOMI\\data\\NO2\\trop_overpass__NO2_____s20180308_e20180410_c20180430203843_McKay.nc'
-output_path = 'C:\\Projects\\TropOMI\\data\\NO2\\'
+output_path = 'C:\\Projects\\TropOMI\\data\\NO2_output\\'
 site = 'Downsview'
 user_lat=43.7810 # Downsview
 user_lon=-79.4680
@@ -61,7 +62,7 @@ for day in days:
         df['time'] =day
         
         df['no2']=abc.groups[day].groups["PRODUCT"].groups["SUPPORT_DATA"].groups["DETAILED_RESULTS"].variables["nitrogendioxide_summed_total_column"][:].ravel()*6.02214e+19
-        df['snow_ice_flag']=abc.groups[day].groups["PRODUCT"].groups["SUPPORT_DATA"].groups["INPUT_DATA"].variables["snow_ice_flag"][:].ravel()
+        #df['snow_ice_flag']=abc.groups[day].groups["PRODUCT"].groups["SUPPORT_DATA"].groups["INPUT_DATA"].variables["snow_ice_flag"][:].ravel()
         
         if i==1:
             df_output = df

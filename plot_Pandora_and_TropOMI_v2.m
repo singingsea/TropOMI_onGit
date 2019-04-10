@@ -1,8 +1,31 @@
 function data = plot_Pandora_and_TropOMI_v2()
+
+%site = 'Downsview';Pandora_no = '104';
+%site = 'Egbert';Pandora_no = '108';
+%site = 'StGeorge';Pandora_no = '145';
+site = 'FortMcKay';Pandora_no = '122';
+TropOMI_type = 'OFFL';
+avg_type = 'closest';%'avg24', 'avg7'
+
+ERA_merged = true;% use the ERA merged data or not
+
 DU = 2.6870e+16;
 addpath('C:\Users\ZhaoX\Documents\MATLAB\matlab');
-save_fig = 0;
-plot_path = 'C:\Projects\TropOMI\plots\';
+save_fig = 1;
+if ERA_merged == true
+    plot_path = ['C:\Projects\TropOMI\plots\' TropOMI_type '\' site '\' avg_type '\' Pandora_no '_ERA\'];
+    filename = ['C:\Projects\TropOMI\data\NO2_merged_with_Pandora_ERA\TropOMI_' TropOMI_type '_' site '_' avg_type '_Pandora' Pandora_no site '_simple.csv'];
+    data = importfile_simple_ERA(filename);
+    Pandora_filename = ['C:\Projects\TropOMI\data\NO2_merged_with_Pandora\Pandora' Pandora_no site '.csv'];
+    Pandora = importfile_Pandora_raw(Pandora_filename);
+else
+    plot_path = ['C:\Projects\TropOMI\plots\' TropOMI_type '\' site '\' avg_type '\' Pandora_no '\'];
+    filename = ['C:\Projects\TropOMI\data\NO2_merged_with_Pandora\TropOMI_' TropOMI_type '_' site '_' avg_type '_Pandora' Pandora_no site '_simple.csv'];
+    data = importfile_merged_simple(filename);
+    Pandora_filename = ['C:\Projects\TropOMI\data\NO2_merged_with_Pandora\Pandora' Pandora_no site '.csv'];
+    Pandora = importfile_Pandora_raw(Pandora_filename);
+end
+mkdir(plot_path);
 %filename = 'C:\Projects\TropOMI\data\NO2_merged_with_Pandora\TropOMI_OFFL_Downsview_avg7km_Pandora103Downsview.csv';
 %filename = 'C:\Projects\TropOMI\data\NO2_merged_with_Pandora\TropOMI_OFFL_Downsview_closest_Pandora103Downsview.csv';
 %filename = 'C:\Projects\TropOMI\data\NO2_merged_with_Pandora\TropOMI_OFFL_Downsview_avg24km_Pandora103Downsview.csv'
@@ -13,8 +36,8 @@ plot_path = 'C:\Projects\TropOMI\plots\';
 %filename = 'C:\Projects\TropOMI\data\NO2_merged_with_Pandora\TropOMI_OFFL_FortMcKay_closest_Pandora122FortMcKay.csv';
 %filename = 'C:\Projects\TropOMI\data\NO2_merged_with_Pandora\TropOMI_NRTI_FortMcKay_closest_Pandora122FortMcKay.csv';
 
-filename = 'C:\Projects\TropOMI\data\NO2_merged_with_Pandora\TropOMI_NRTI_Downsview_closest_Pandora103Downsview_simple.csv'
-data = importfile_merged_simple(filename);
+%filename = 'C:\Projects\TropOMI\data\NO2_merged_with_Pandora\TropOMI_OFFL_Egbert_closest_Pandora108Egbert_simple.csv'
+
 % try
 %     data = importfile(filename);
 % catch
@@ -41,12 +64,142 @@ TF = isnan(data.Pandora_NO2);
 data(TF,:) = [];
 
 %% give a trick TF
-  TF_trick1 = abs(data.TropOMI_NO2./DU-data.Pandora_NO2) > 0.8;
-  TF_trick2 = data.d./1000 > 20;
-  TF_trick = TF_trick1 | TF_trick2;
-  data(TF_trick,:)=[];
+%   TF_trick1 = abs(data.TropOMI_NO2./DU-data.Pandora_NO2) > 0.8;
+%   TF_trick2 = data.d./1000 > 20;
+%   TF_trick = TF_trick1 | TF_trick2;
+%   data(TF_trick,:)=[];
 %data(TF_trick1,:)=[];
 %data(TF_trick2,:)=[];
+u = data.u_1000hPa;
+v = data.v_1000hPa;
+wind_direction_a = atan2d(u,v);
+data.wind_speed_1000hPa = hypot(u,v);% wind speed [m/s]
+data.wind_direction_1000hPa = rem(360+wind_direction_a, 360);% wind direction in range of [0 360]
+
+u = data.u_900hPa;
+v = data.v_900hPa;
+wind_direction_a = atan2d(u,v);
+data.wind_speed_900hPa = hypot(u,v);
+data.wind_direction_900hPa = rem(360+wind_direction_a, 360);
+
+
+u = data.u_800hPa;
+v = data.v_800hPa;
+wind_direction_a = atan2d(u,v);
+data.wind_speed_800hPa = hypot(u,v);
+data.wind_direction_800hPa = rem(360+wind_direction_a, 360);
+
+
+u = data.u_700hPa;
+v = data.v_700hPa;
+wind_direction_a = atan2d(u,v);
+data.wind_speed_700hPa = hypot(u,v);
+data.wind_direction_700hPa = rem(360+wind_direction_a, 360);
+
+figure;
+fig_name = 'Pandora_TropOMI_winfunction_1000hPa';
+wind_direction = data.wind_direction_1000hPa.*(pi/180);
+rho = data.wind_speed_1000hPa;
+data.rel_diff = (data.TropOMI_NO2./DU - data.Pandora_NO2)./((data.Pandora_NO2 + data.TropOMI_NO2./DU)./2).*100;
+C = data.rel_diff;
+sz = data.Pandora_NO2.*300;
+plot_table = table;
+plot_table.wind_direction = wind_direction;
+plot_table.rho = rho;
+plot_table.sz = sz;
+plot_table.C = C;
+plot_table = sortrows(plot_table,'C','descend');
+polarscatter([plot_table.wind_direction;280.*(pi/180)],[plot_table.rho;20],[plot_table.sz;1*300],[plot_table.C;0],'filled','MarkerFaceAlpha',.6);
+ax = gca;
+ax.ThetaDir = 'clockwise';
+ax.ThetaZeroLocation = 'top';
+colormap(jet);
+colorbar;rlim([0 20]);caxis([-100 100]);
+title(['TropOMI NO_2 and Pandora \Delta_r_e_l [%] Wind function (1000 hPa)']);
+text(300.*(pi/180),34,[site]);
+text(284.*(pi/180),30.5,['Scale:']);
+text(280.*(pi/180),30,['NO_2 VCD = 1 DU ']);
+text(276.*(pi/180),30,['\Delta_r_e_l = 0 %']);
+print_setting(1/2,save_fig,[plot_path fig_name]);
+
+figure;
+fig_name = 'Pandora_TropOMI_winfunction_900hPa';
+wind_direction = data.wind_direction_900hPa.*(pi/180);
+rho = data.wind_speed_900hPa;
+data.rel_diff = (data.TropOMI_NO2./DU - data.Pandora_NO2)./((data.Pandora_NO2 + data.TropOMI_NO2./DU)./2).*100;
+C = data.rel_diff;
+sz = data.Pandora_NO2.*300;
+plot_table = table;
+plot_table.wind_direction = wind_direction;
+plot_table.rho = rho;
+plot_table.sz = sz;
+plot_table.C = C;
+plot_table = sortrows(plot_table,'C','descend');
+polarscatter([plot_table.wind_direction;280.*(pi/180)],[plot_table.rho;20],[plot_table.sz;1*300],[plot_table.C;0],'filled','MarkerFaceAlpha',.6);
+ax = gca;
+ax.ThetaDir = 'clockwise';
+ax.ThetaZeroLocation = 'top';
+colormap(jet);
+colorbar;rlim([0 20]);caxis([-100 100]);
+title(['TropOMI NO_2 and Pandora \Delta_r_e_l [%] Wind function (900 hPa)']);
+text(300.*(pi/180),34,[site]);
+text(284.*(pi/180),30.5,['Scale:']);
+text(280.*(pi/180),30,['NO_2 VCD = 1 DU ']);
+text(276.*(pi/180),30,['\Delta_r_e_l = 0 %']);
+print_setting(1/2,save_fig,[plot_path fig_name]);
+
+
+figure;
+fig_name = 'Pandora_TropOMI_winfunction_800hPa';
+wind_direction = data.wind_direction_800hPa.*(pi/180);
+rho = data.wind_speed_800hPa;
+data.rel_diff = (data.TropOMI_NO2./DU - data.Pandora_NO2)./((data.Pandora_NO2 + data.TropOMI_NO2./DU)./2).*100;
+C = data.rel_diff;
+sz = data.Pandora_NO2.*300;
+plot_table = table;
+plot_table.wind_direction = wind_direction;
+plot_table.rho = rho;
+plot_table.sz = sz;
+plot_table.C = C;
+plot_table = sortrows(plot_table,'C','descend');
+polarscatter([plot_table.wind_direction;280.*(pi/180)],[plot_table.rho;20],[plot_table.sz;1*300],[plot_table.C;0],'filled','MarkerFaceAlpha',.6);
+ax = gca;
+ax.ThetaDir = 'clockwise';
+ax.ThetaZeroLocation = 'top';
+colormap(jet);
+colorbar;rlim([0 20]);caxis([-100 100]);
+title(['TropOMI NO_2 and Pandora \Delta_r_e_l [%] Wind function (800 hPa)']);
+text(300.*(pi/180),34,[site]);
+text(284.*(pi/180),30.5,['Scale:']);
+text(280.*(pi/180),30,['NO_2 VCD = 1 DU ']);
+text(276.*(pi/180),30,['\Delta_r_e_l = 0 %']);
+print_setting(1/2,save_fig,[plot_path fig_name]);
+
+figure;
+fig_name = 'Pandora_TropOMI_winfunction_700hPa';
+wind_direction = data.wind_direction_700hPa.*(pi/180);
+rho = data.wind_speed_700hPa;
+data.rel_diff = (data.TropOMI_NO2./DU - data.Pandora_NO2)./((data.Pandora_NO2 + data.TropOMI_NO2./DU)./2).*100;
+C = data.rel_diff;
+sz = data.Pandora_NO2.*300;
+plot_table = table;
+plot_table.wind_direction = wind_direction;
+plot_table.rho = rho;
+plot_table.sz = sz;
+plot_table.C = C;
+plot_table = sortrows(plot_table,'C','descend');
+polarscatter([plot_table.wind_direction;280.*(pi/180)],[plot_table.rho;20],[plot_table.sz;1*300],[plot_table.C;0],'filled','MarkerFaceAlpha',.6);
+ax = gca;
+ax.ThetaDir = 'clockwise';
+ax.ThetaZeroLocation = 'top';
+colormap(jet);
+colorbar;rlim([0 20]);caxis([-100 100]);
+title(['TropOMI NO_2 and Pandora \Delta_r_e_l [%] Wind function (700 hPa)']);
+text(300.*(pi/180),34,[site]);
+text(284.*(pi/180),30.5,['Scale:']);
+text(280.*(pi/180),30,['NO_2 VCD = 1 DU ']);
+text(276.*(pi/180),30,['\Delta_r_e_l = 0 %']);
+print_setting(1/2,save_fig,[plot_path fig_name]);
 
 %% check the quality of merge
 fig_name = 'TropOMI_vs_pandora_merge_quality';
@@ -68,6 +221,8 @@ ylabel(['TropOMI NO_2 [DU]']);
 xlabel(['Pandora NO_2 [DU]']);
 title(['Color coded by distance [km]']);
 colorbar;
+xlim([0 1.1]);
+ylim([0 1.1]);
 print_setting(1/4,save_fig,[plot_path fig_name]);
 
 %% check the quality of the data
@@ -79,18 +234,22 @@ ylabel(['TropOMI NO_2 [DU]']);
 xlabel(['Pandora NO_2 [DU]']);
 title(['Color coded by delta time (TropOMI - Pandora)[min]']);
 colorbar;
+xlim([0 1.1]);
+ylim([0 1.1]);
 print_setting(1/4,save_fig,[plot_path fig_name]);
 
 %% time series
 fig_name = 'Pandora_vs_TropOMI_timeserise';
 figure;hold all;
-%plot(Pandora.Column1UTdateandtimeforcenterofmeasurementyyyymmddThhmmssZISO86,Pandora.Column8NitrogendioxidetotalverticalcolumnamountDobsonUnits9e99r,'.')
-plot(data.TropOMI_datetime,data.TropOMI_NO2./DU,'s');
-plot(data.Pandora_datetime,data.Pandora_NO2,'s');
+plot(Pandora.Column1UTdateandtimeforcenterofmeasurementyyyymmddThhmmssZISO86,Pandora.Column8NitrogendioxidetotalverticalcolumnamountDobsonUnits9e99r,'k.')
+plot(data.TropOMI_datetime,data.TropOMI_NO2./DU,'rs');
+plot(data.Pandora_datetime,data.Pandora_NO2,'bs');
 ylabel(['NO_2 [DU]']);
-%legend({'Pandora','TropOMI','Pandora (conincident)'});
-legend({'TropOMI','Pandora (conincident)'});
+legend({'Pandora','TropOMI','Pandora (conincident)'});
+%legend({'TropOMI','Pandora (conincident)'});
 print_setting(1/2,save_fig,[plot_path fig_name]);
+ylim([0 1.8]);
+
 
 %%
 function TropOMIOFFLDownsviewavg7kmPandora103Downsview = importfile(filename, startRow, endRow)
@@ -1120,4 +1279,150 @@ TropOMINRTIDownsviewclosestPandora103Downsviewsimple.d = cell2mat(rawNumericColu
 
 % TropOMINRTIDownsviewclosestPandora103Downsviewsimple.TropOMI_datetime=datenum(TropOMINRTIDownsviewclosestPandora103Downsviewsimple.TropOMI_datetime);TropOMINRTIDownsviewclosestPandora103Downsviewsimple.Pandora_datetime=datenum(TropOMINRTIDownsviewclosestPandora103Downsviewsimple.Pandora_datetime);
 
+
+%%
+function TropOMIOFFLDownsviewclosestPandora104Downsviewsimple = importfile_simple_ERA(filename, startRow, endRow)
+%IMPORTFILE Import numeric data from a text file as a matrix.
+%   TROPOMIOFFLDOWNSVIEWCLOSESTPANDORA104DOWNSVIEWSIMPLE =
+%   IMPORTFILE(FILENAME) Reads data from text file FILENAME for the default
+%   selection.
+%
+%   TROPOMIOFFLDOWNSVIEWCLOSESTPANDORA104DOWNSVIEWSIMPLE =
+%   IMPORTFILE(FILENAME, STARTROW, ENDROW) Reads data from rows STARTROW
+%   through ENDROW of text file FILENAME.
+%
+% Example:
+%   TropOMIOFFLDownsviewclosestPandora104Downsviewsimple = importfile('TropOMI_OFFL_Downsview_closest_Pandora104Downsview_simple.csv', 2, 154);
+%
+%    See also TEXTSCAN.
+
+% Auto-generated by MATLAB on 2018/12/04 14:53:21
+
+%% Initialize variables.
+delimiter = ',';
+if nargin<=2
+    startRow = 2;
+    endRow = inf;
+end
+
+%% Read columns of data as text:
+% For more information, see the TEXTSCAN documentation.
+formatSpec = '%s%s%s%s%s%s%s%s%s%s%s%s%s%[^\n\r]';
+
+%% Open the text file.
+fileID = fopen(filename,'r');
+
+%% Read columns of data according to the format.
+% This call is based on the structure of the file used to generate this
+% code. If an error occurs for a different file, try regenerating the code
+% from the Import Tool.
+dataArray = textscan(fileID, formatSpec, endRow(1)-startRow(1)+1, 'Delimiter', delimiter, 'TextType', 'string', 'HeaderLines', startRow(1)-1, 'ReturnOnError', false, 'EndOfLine', '\r\n');
+for block=2:length(startRow)
+    frewind(fileID);
+    dataArrayBlock = textscan(fileID, formatSpec, endRow(block)-startRow(block)+1, 'Delimiter', delimiter, 'TextType', 'string', 'HeaderLines', startRow(block)-1, 'ReturnOnError', false, 'EndOfLine', '\r\n');
+    for col=1:length(dataArray)
+        dataArray{col} = [dataArray{col};dataArrayBlock{col}];
+    end
+end
+
+%% Close the text file.
+fclose(fileID);
+
+%% Convert the contents of columns containing numeric text to numbers.
+% Replace non-numeric text with NaN.
+raw = repmat({''},length(dataArray{1}),length(dataArray)-1);
+for col=1:length(dataArray)-1
+    raw(1:length(dataArray{col}),col) = mat2cell(dataArray{col}, ones(length(dataArray{col}), 1));
+end
+numericData = NaN(size(dataArray{1},1),size(dataArray,2));
+
+for col=[2,4,5,6,7,8,9,10,11,12,13]
+    % Converts text in the input cell array to numbers. Replaced non-numeric
+    % text with NaN.
+    rawData = dataArray{col};
+    for row=1:size(rawData, 1)
+        % Create a regular expression to detect and remove non-numeric prefixes and
+        % suffixes.
+        regexstr = '(?<prefix>.*?)(?<numbers>([-]*(\d+[\,]*)+[\.]{0,1}\d*[eEdD]{0,1}[-+]*\d*[i]{0,1})|([-]*(\d+[\,]*)*[\.]{1,1}\d+[eEdD]{0,1}[-+]*\d*[i]{0,1}))(?<suffix>.*)';
+        try
+            result = regexp(rawData(row), regexstr, 'names');
+            numbers = result.numbers;
+            
+            % Detected commas in non-thousand locations.
+            invalidThousandsSeparator = false;
+            if numbers.contains(',')
+                thousandsRegExp = '^\d+?(\,\d{3})*\.{0,1}\d*$';
+                if isempty(regexp(numbers, thousandsRegExp, 'once'))
+                    numbers = NaN;
+                    invalidThousandsSeparator = true;
+                end
+            end
+            % Convert numeric text to numbers.
+            if ~invalidThousandsSeparator
+                numbers = textscan(char(strrep(numbers, ',', '')), '%f');
+                numericData(row, col) = numbers{1};
+                raw{row, col} = numbers{1};
+            end
+        catch
+            raw{row, col} = rawData{row};
+        end
+    end
+end
+
+dateFormats = {'yyyy-MM-dd HH:mm:ss', 'yyyyMMdd''T''HHmmss''Z'''};
+dateFormatIndex = 1;
+blankDates = cell(1,size(raw,2));
+anyBlankDates = false(size(raw,1),1);
+invalidDates = cell(1,size(raw,2));
+anyInvalidDates = false(size(raw,1),1);
+for col=[1,3]% Convert the contents of columns with dates to MATLAB datetimes using the specified date format.
+    try
+        dates{col} = datetime(dataArray{col}, 'Format', dateFormats{col==[1,3]}, 'InputFormat', dateFormats{col==[1,3]}); %#ok<AGROW>
+    catch
+        try
+            % Handle dates surrounded by quotes
+            dataArray{col} = cellfun(@(x) x(2:end-1), dataArray{col}, 'UniformOutput', false);
+            dates{col} = datetime(dataArray{col}, 'Format', dateFormats{col==[1,3]}, 'InputFormat', dateFormats{col==[1,3]}); %#ok<AGROW>
+        catch
+            dates{col} = repmat(datetime([NaN NaN NaN]), size(dataArray{col})); %#ok<AGROW>
+        end
+    end
+    
+    dateFormatIndex = dateFormatIndex + 1;
+    blankDates{col} = dataArray{col} == '';
+    anyBlankDates = blankDates{col} | anyBlankDates;
+    invalidDates{col} = isnan(dates{col}.Hour) - blankDates{col};
+    anyInvalidDates = invalidDates{col} | anyInvalidDates;
+end
+dates = dates(:,[1,3]);
+blankDates = blankDates(:,[1,3]);
+invalidDates = invalidDates(:,[1,3]);
+
+%% Split data into numeric and string columns.
+rawNumericColumns = raw(:, [2,4,5,6,7,8,9,10,11,12,13]);
+
+%% Replace non-numeric cells with NaN
+R = cellfun(@(x) ~isnumeric(x) && ~islogical(x),rawNumericColumns); % Find non-numeric cells
+rawNumericColumns(R) = {NaN}; % Replace non-numeric cells
+
+%% Create output variable
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple = table;
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.TropOMI_datetime = dates{:, 1};
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.TropOMI_NO2 = cell2mat(rawNumericColumns(:, 1));
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.Pandora_datetime = dates{:, 2};
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.Pandora_NO2 = cell2mat(rawNumericColumns(:, 2));
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.d = cell2mat(rawNumericColumns(:, 3));
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.u_1000hPa = cell2mat(rawNumericColumns(:, 4));
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.v_1000hPa = cell2mat(rawNumericColumns(:, 5));
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.u_900hPa = cell2mat(rawNumericColumns(:, 6));
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.v_900hPa = cell2mat(rawNumericColumns(:, 7));
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.u_800hPa = cell2mat(rawNumericColumns(:, 8));
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.v_800hPa = cell2mat(rawNumericColumns(:, 9));
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.u_700hPa = cell2mat(rawNumericColumns(:, 10));
+TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.v_700hPa = cell2mat(rawNumericColumns(:, 11));
+
+% For code requiring serial dates (datenum) instead of datetime, uncomment
+% the following line(s) below to return the imported dates as datenum(s).
+
+% TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.TropOMI_datetime=datenum(TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.TropOMI_datetime);TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.Pandora_datetime=datenum(TropOMIOFFLDownsviewclosestPandora104Downsviewsimple.Pandora_datetime);
 
