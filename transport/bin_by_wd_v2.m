@@ -5,7 +5,7 @@ type = '1site'; % '2sites'
 addpath('C:\Users\ZhaoX\Documents\MATLAB\matlab\');
 method = 'rotation';%'rotation','twosites_rotation','wind_driven'
 % site = 'Downsview';
-% Pandora_no = '104';
+% Pandora_no = '103';
 % site = 'FortMcKay';
 % Pandora_no = '122';
 % site = 'StGeorge';
@@ -13,10 +13,12 @@ method = 'rotation';%'rotation','twosites_rotation','wind_driven'
 site = 'Egbert';
 Pandora_no = '108';
 
-use_eccc_no2 = true;
+use_eccc_no2 = false;
 %Pandora2_no = 122;
 Pandora2_no = Pandora_no;
-    
+
+OMI_resolution = false; % if true, use coarse resolution x1 <= 20, y1 <= 30; if false, use x1<=5, y1 <=30
+
 save_fig = 1;
 if strcmp(method, 'rotation')
     if use_eccc_no2
@@ -48,13 +50,17 @@ if use_sum_no2
 end
 
 %% filter
-
-% TF = (abs(data.x1) <= 5) & (abs(data.y1) <= 30) & (abs(data.arrival_time) <= 1);
-TF = (abs(data.x1) <= 20) & (abs(data.y1) <= 30) & (abs(data.arrival_time) <= 1);
+if OMI_resolution
+    TF = (abs(data.x1) <= 20) & (abs(data.y1) <= 30) & (abs(data.arrival_time) <= 1);
+    TF = (abs(data2.x1) <= 20) & (abs(data2.y1) <= 30) & (abs(data2.arrival_time) <= 1);
+else
+    TF = (abs(data.x1) <= 5) & (abs(data.y1) <= 30) & (abs(data.arrival_time) <= 1);
+    TF = (abs(data2.x1) <= 5) & (abs(data2.y1) <= 30) & (abs(data2.arrival_time) <= 1);
+end
 data(~TF,:) = [];
 
-% TF = (abs(data2.x1) <= 5) & (abs(data2.y1) <= 30) & (abs(data2.arrival_time) <= 1);
-TF = (abs(data2.x1) <= 20) & (abs(data2.y1) <= 30) & (abs(data2.arrival_time) <= 1);
+
+
 
 data2(~TF,:) = [];
 
