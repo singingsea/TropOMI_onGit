@@ -6,12 +6,12 @@ addpath('C:\Users\ZhaoX\Documents\MATLAB\matlab\');
 method = 'rotation';%'rotation','twosites_rotation','wind_driven'
 % site = 'Downsview';
 % Pandora_no = '104';
-site = 'FortMcKay';
-Pandora_no = '122';
+% site = 'FortMcKay';
+% Pandora_no = '122';
 % site = 'StGeorge';
 % Pandora_no = '145';
-% site = 'Egbert';
-% Pandora_no = '108';
+site = 'Egbert';
+Pandora_no = '108';
 
 use_eccc_no2 = true;
 %Pandora2_no = 122;
@@ -20,11 +20,11 @@ Pandora2_no = Pandora_no;
 save_fig = 1;
 if strcmp(method, 'rotation')
     if use_eccc_no2
-        data_path = ['C:\Projects\TropOMI\plots\Wind_transport\v9_smooth2OMI\' num2str(Pandora_no) '\rotation_eccc\' ];
-        data2_path = ['C:\Projects\TropOMI\plots\Wind_transport\v9_smooth2OMI\' num2str(Pandora2_no) '\rotation_eccc\' ];
+        data_path = ['C:\Projects\TropOMI\plots\Wind_transport\v9\' num2str(Pandora_no) '\rotation_eccc\' ];
+        data2_path = ['C:\Projects\TropOMI\plots\Wind_transport\v9\' num2str(Pandora2_no) '\rotation_eccc\' ];
     else
-        data_path = ['C:\Projects\TropOMI\plots\Wind_transport\v9_smooth2OMI\' num2str(Pandora_no) '\rotation_knmi\' ];
-        data2_path = ['C:\Projects\TropOMI\plots\Wind_transport\v9_smooth2OMI\' num2str(Pandora2_no) '\rotation_knmi\' ];
+        data_path = ['C:\Projects\TropOMI\plots\Wind_transport\v9\' num2str(Pandora_no) '\rotation_knmi\' ];
+        data2_path = ['C:\Projects\TropOMI\plots\Wind_transport\v9\' num2str(Pandora2_no) '\rotation_knmi\' ];
     end
     load([data_path type 'TropOMI_Pandora_transport.mat']);
     data = C_all;
@@ -33,7 +33,8 @@ if strcmp(method, 'rotation')
     %plot_path = [data_path '\pixel_averaging\'];mkdir(plot_path);
     %plot_path = [data_path '\pixel_averaging_newbins\'];mkdir(plot_path);
     %plot_path = [data_path '\pixel_averaging_comparetoOMI\'];mkdir(plot_path);
-    plot_path = [data_path '\pixel_averaging_correctedWD\'];mkdir(plot_path);
+    %plot_path = [data_path '\pixel_averaging_correctedWD\'];mkdir(plot_path);
+    plot_path = [data_path '\pixel_averaging_corrected_Rel_diff\'];mkdir(plot_path);
 elseif strcmp(method, 'twosites_rotation')
     data_path = ['C:\Projects\TropOMI\plots\Wind_transport\' num2str(Pandora_no) '\twosites_rotation\'];
     load([data_path type 'TropOMI_Pandora_transport.mat']);
@@ -223,6 +224,9 @@ y_pandora_err = std(data_bins.pandora,'omitnan')./(N).^0.5;
 y_diff = y_pandora - y;% absolute difference
 y_diff_err = (y_pandora_err.^2 + y_err.^2).^0.5;% combined error
 
+% the above method is same as the below one, no difference! 
+%y_diff = mean((data_bins.pandora - data_bins.no2),'omitnan');% absolute difference
+
 %errorbar(1:N_bins,y_diff,y_diff_err);
 errorbar(1:(N_bins+1),y_diff,y_diff_err);
 
@@ -237,13 +241,17 @@ print_setting(0,save_fig,[plot_path fig_name]);
 
 %% major wind bin plot --> rel diff
 figure;hold all;fig_name = 'Mean_NO2_bin_by_wd_rel_diff';
-y=mean(data_bins.no2,'omitnan');% tropomi no2
-y_err = std(data_bins.no2,'omitnan')./(N).^0.5;
 
-y_pandora=mean(data_bins.pandora,'omitnan');% pandora no2
-y_pandora_err = std(data_bins.pandora,'omitnan')./(N).^0.5;
+%y=mean(data_bins.no2,'omitnan');% tropomi no2
+%y_err = std(data_bins.no2,'omitnan')./(N).^0.5;
+%y_pandora=mean(data_bins.pandora,'omitnan');% pandora no2
+%y_pandora_err = std(data_bins.pandora,'omitnan')./(N).^0.5;
+%y_rel_diff = (y_pandora - y)./((y_pandora + y)/2).*100;% absolute difference
 
-y_rel_diff = (y_pandora - y)./((y_pandora + y)/2).*100;% absolute difference
+% the above method is not correct, if we following the delta_rel defination
+% from Cristen. It should be the mean of the rel_diff (for each coincident
+% measurment)
+y_rel_diff = mean(2.*(data_bins.pandora - data_bins.no2)./(data_bins.pandora + data_bins.no2),'omitnan').*100;
 
 %plot(1:N_bins,y_rel_diff,'.-');
 plot(1:(N_bins+1),y_rel_diff,'.-');
